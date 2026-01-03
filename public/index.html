@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube MP3 下載器</title>
+    <title>YouTube 下載器</title>
     <style>
         * {
             margin: 0;
@@ -180,8 +180,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>YouTube MP3 下載器</h1>
-        <p class="subtitle">輸入 YouTube 網址，選擇音質，即可下載 MP3</p>
+        <h1>YouTube 下載器</h1>
+        <p class="subtitle">下載 YouTube 影片或音訊</p>
 
         <form id="downloadForm">
             <div class="form-group">
@@ -200,6 +200,20 @@
             </div>
 
             <div class="form-group">
+                <label>下載類型</label>
+                <div class="bitrate-group" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="bitrate-option">
+                        <input type="radio" id="typeAudio" name="downloadType" value="audio" checked>
+                        <label for="typeAudio">音訊 (MP3)</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="typeVideo" name="downloadType" value="video">
+                        <label for="typeVideo">影片 (MP4)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="audioQualityGroup">
                 <label>音訊品質</label>
                 <div class="bitrate-group">
                     <div class="bitrate-option">
@@ -217,6 +231,28 @@
                     <div class="bitrate-option">
                         <input type="radio" id="bitrate320" name="bitrate" value="320">
                         <label for="bitrate320">320kbps</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="videoQualityGroup" style="display: none;">
+                <label>影片品質</label>
+                <div class="bitrate-group">
+                    <div class="bitrate-option">
+                        <input type="radio" id="quality720" name="videoQuality" value="720" checked>
+                        <label for="quality720">720p</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="quality1080" name="videoQuality" value="1080">
+                        <label for="quality1080">1080p</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="quality1440" name="videoQuality" value="1440">
+                        <label for="quality1440">1440p</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="qualityBest" name="videoQuality" value="best">
+                        <label for="qualityBest">最佳品質</label>
                     </div>
                 </div>
             </div>

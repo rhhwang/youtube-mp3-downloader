@@ -6,6 +6,8 @@ const downloadBtn = document.getElementById('downloadBtn');
 const statusDiv = document.getElementById('status');
 const progressBar = document.getElementById('progressBar');
 const progressBarFill = document.getElementById('progressBarFill');
+const audioQualityGroup = document.getElementById('audioQualityGroup');
+const videoQualityGroup = document.getElementById('videoQualityGroup');
 
 // 載入預設下載目錄
 async function loadDefaultPath() {
@@ -22,6 +24,20 @@ async function loadDefaultPath() {
 
 // 頁面載入時自動填入預設路徑
 loadDefaultPath();
+
+// 處理下載類型切換
+const downloadTypeRadios = document.querySelectorAll('input[name="downloadType"]');
+downloadTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'audio') {
+            audioQualityGroup.style.display = 'block';
+            videoQualityGroup.style.display = 'none';
+        } else {
+            audioQualityGroup.style.display = 'none';
+            videoQualityGroup.style.display = 'block';
+        }
+    });
+});
 
 // 顯示狀態訊息
 function showStatus(message, type = 'info') {
@@ -74,7 +90,14 @@ form.addEventListener('submit', async (e) => {
 
     const youtubeUrl = youtubeUrlInput.value.trim();
     const outputPath = outputPathInput.value;
-    const bitrate = document.querySelector('input[name="bitrate"]:checked').value;
+    const downloadType = document.querySelector('input[name="downloadType"]:checked').value;
+
+    let bitrate, videoQuality;
+    if (downloadType === 'audio') {
+        bitrate = document.querySelector('input[name="bitrate"]:checked').value;
+    } else {
+        videoQuality = document.querySelector('input[name="videoQuality"]:checked').value;
+    }
 
     // 驗證輸入
     if (!youtubeUrl) {
@@ -105,16 +128,24 @@ form.addEventListener('submit', async (e) => {
     }, 500);
 
     try {
+        const requestBody = {
+            youtubeUrl,
+            outputPath,
+            downloadType
+        };
+
+        if (downloadType === 'audio') {
+            requestBody.bitrate = bitrate;
+        } else {
+            requestBody.videoQuality = videoQuality;
+        }
+
         const response = await fetch('/api/download', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                youtubeUrl,
-                outputPath,
-                bitrate
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();

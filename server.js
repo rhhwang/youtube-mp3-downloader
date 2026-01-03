@@ -17,9 +17,9 @@ app.get('/api/default-path', (req, res) => {
     res.json({ defaultPath: downloadPath });
 });
 
-// 下載 YouTube 音訊的 API
+// 下載 YouTube 音訊/影片的 API
 app.post('/api/download', async (req, res) => {
-    const { youtubeUrl, outputPath, bitrate } = req.body;
+    const { youtubeUrl, outputPath, bitrate, downloadType, videoQuality } = req.body;
 
     // 驗證輸入
     if (!youtubeUrl) {
@@ -30,8 +30,18 @@ app.post('/api/download', async (req, res) => {
         return res.status(400).json({ error: '請選擇儲存目錄' });
     }
 
-    if (!bitrate || !['128', '192', '256', '320'].includes(bitrate)) {
+    if (!downloadType || !['audio', 'video'].includes(downloadType)) {
+        return res.status(400).json({ error: '請選擇下載類型' });
+    }
+
+    // 驗證音訊品質（如果是音訊下載）
+    if (downloadType === 'audio' && (!bitrate || !['128', '192', '256', '320'].includes(bitrate))) {
         return res.status(400).json({ error: '無效的音訊品質設定' });
+    }
+
+    // 驗證影片品質（如果是影片下載）
+    if (downloadType === 'video' && (!videoQuality || !['720', '1080', '1440', 'best'].includes(videoQuality))) {
+        return res.status(400).json({ error: '無效的影片品質設定' });
     }
 
     // 驗證 YouTube URL
@@ -48,12 +58,28 @@ app.post('/api/download', async (req, res) => {
     // 生成輸出檔案路徑
     const outputTemplate = path.join(outputPath, '%(title)s.%(ext)s');
 
-    // 建立 yt-dlp 指令
-    // -x: 提取音訊
-    // --audio-format mp3: 轉換為 MP3
-    // --audio-quality: 指定音訊品質
-    // -o: 輸出檔案名稱模板
-    const command = `yt-dlp -x --audio-format mp3 --audio-quality ${bitrate}K -o "${outputTemplate}" "${youtubeUrl}"`;
+    // 根據下載類型建立不同的 yt-dlp 指令
+    let command;
+
+    if (downloadType === 'audio') {
+        // 音訊下載
+        // -x: 提取音訊
+        // --audio-format mp3: 轉換為 MP3
+        // --audio-quality: 指定音訊品質
+        // -o: 輸出檔案名稱模板
+        command = `yt-dlp -x --audio-format mp3 --audio-quality ${bitrate}K -o "${outputTemplate}" "${youtubeUrl}"`;
+    } else {
+        // 影片下載
+        let formatString;
+        if (videoQuality === 'best') {
+            // 下載最佳品質（影片+音訊合併）
+            formatString = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+        } else {
+            // 下載指定解析度
+            formatString = `bestvideo[height<=${videoQuality}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${videoQuality}][ext=mp4]/best`;
+        }
+        command = `yt-dlp -f "${formatString}" --merge-output-format mp4 -o "${outputTemplate}" "${youtubeUrl}"`;
+    }
 
     console.log('執行指令:', command);
 
@@ -81,8 +107,16 @@ app.post('/api/download', async (req, res) => {
         console.log('下載成功:', stdout);
 
         // 從輸出中提取檔案名稱
-        const fileMatch = stdout.match(/\[ExtractAudio\] Destination: (.+\.mp3)/);
         let fileName = '未知檔案';
+        let fileMatch;
+
+        if (downloadType === 'audio') {
+            fileMatch = stdout.match(/\[ExtractAudio\] Destination: (.+\.mp3)/);
+        } else {
+            // 影片下載的輸出格式
+            fileMatch = stdout.match(/Merging formats into "(.+\.mp4)"/) ||
+                       stdout.match(/\[download\] (.+\.mp4) has already been downloaded/);
+        }
 
         if (fileMatch && fileMatch[1]) {
             fileName = path.basename(fileMatch[1]);
