@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube MP3 下載器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .bitrate-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .bitrate-option {
+            position: relative;
+        }
+
+        .bitrate-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .bitrate-option label {
+            display: block;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 0;
+        }
+
+        .bitrate-option input[type="radio"]:checked + label {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .bitrate-option label:hover {
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        small {
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube MP3 下載器</h1>
+        <p class="subtitle">輸入 YouTube 網址，選擇音質，即可下載 MP3</p>
+
+        <form id="downloadForm">
+            <div class="form-group">
+                <label for="youtubeUrl">YouTube 網址</label>
+                <input type="text" id="youtubeUrl" name="youtubeUrl"
+                       placeholder="https://www.youtube.com/watch?v=..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="outputPath">儲存目錄</label>
+                <input type="text" id="outputPath" name="outputPath"
+                       placeholder="例如：/Users/你的用戶名/Downloads" required>
+                <small style="color: #999; font-size: 12px; margin-top: 5px; display: block;">
+                    請輸入完整的資料夾路徑，例如：/Users/你的用戶名/Downloads
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label>音訊品質</label>
+                <div class="bitrate-group">
+                    <div class="bitrate-option">
+                        <input type="radio" id="bitrate128" name="bitrate" value="128" checked>
+                        <label for="bitrate128">128kbps</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="bitrate192" name="bitrate" value="192">
+                        <label for="bitrate192">192kbps</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="bitrate256" name="bitrate" value="256">
+                        <label for="bitrate256">256kbps</label>
+                    </div>
+                    <div class="bitrate-option">
+                        <input type="radio" id="bitrate320" name="bitrate" value="320">
+                        <label for="bitrate320">320kbps</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="downloadBtn">開始下載</button>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+
+            <div class="status" id="status"></div>
+        </form>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
