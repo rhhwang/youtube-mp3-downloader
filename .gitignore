@@ -3,3 +3,6 @@ node_modules/
 *.log
 .DS_Store
 .env
+
+# Local docs (not for repo)
+啟動方式.docx
